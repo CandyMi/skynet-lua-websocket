@@ -8,7 +8,7 @@
 
   The following usage examples will show you how to use `skynet-websocket`:
 
-  ```
+  ```lua
   -- main.lua for skynet start script.
   local skynet = require "skynet"
   local socket = require "skynet.socket"
@@ -18,9 +18,7 @@
   skynet.start(function()
   	local server = socket.listen("0.0.0.0", 8000, 128)
   	socket.start(server, function(id, ipaddr)
-  		local wss = wsserver:new {
-  			fd = id, cls = ws
-  		}
+  		local wss = wsserver:new { fd = id, cls = ws }
   		return wss:start()
   	end)
   end)
