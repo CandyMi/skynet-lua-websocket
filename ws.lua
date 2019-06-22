@@ -1,3 +1,4 @@
+local skynet = require "skynet"
 local class = require "class"
 
 local ws = class("ws")
