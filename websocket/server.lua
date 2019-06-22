@@ -138,6 +138,14 @@ function websocket:set_timeout (timeout)
   return self
 end
 
+-- 设置path验证, path不一致返回400
+function websocket:set_path (path)
+  if type(path) == 'string' and path ~= 'string' then
+    self.path = path
+  end
+  return self
+end
+
 -- Websocket Server 事件循环
 function websocket:start()
   socket.start(self.fd)
@@ -162,7 +170,8 @@ function websocket:start()
           return
         end
         ws.closed = true
-        return _send_frame(self.fd, true, 0x8, char(((1000 >> 8) & 0xff), (1000 & 0xff))..(type(data) ~= 'string' and '' or data), max_payload_len, send_masked)
+        _send_frame(self.fd, true, 0x8, char(((1000 >> 8) & 0xff), (1000 & 0xff))..(type(data) ~= 'string' and '' or data), max_payload_len, send_masked)
+        return self:close()
       end,
     }
   }
