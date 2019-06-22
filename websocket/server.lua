@@ -15,14 +15,15 @@ local _recv_frame = wbproto.recv_frame
 local _send_frame = wbproto.send_frame
 
 local type = type
-local char = string.char
 local pcall = pcall
+local assert = assert
 local tostring = tostring
 local tonumber = tonumber
+
+local char = string.char
 local match = string.match
 local lower = string.lower
 local concat = table.concat
-local co_self = coroutine.running
 
 local HTTP_CODE = {
   [101] = "HTTP/1.1 101 Switching Protocol",
@@ -81,8 +82,7 @@ end
 -- 握手
 local function do_handshak (self)
   local fd, auth = self.fd, false
-  skynet.fork(function (...)
-    skynet.sleep(self.timeout or 3 * 100)
+  skynet.timeout(self.timeout or 3 * 100, function (...)
     if not auth then
       self.fd = nil
       return sock_close(fd)
@@ -97,7 +97,7 @@ local function do_handshak (self)
     sock_send(fd, ERROR_RESPONSE(400))
     return nil, "1. 错误的HTTP Protocol Path 或者 methond."
   end
-  if method ~= "GET" or (self.path and self.path ~= path) or tonumber(version) ~= 1.1 then
+  if method ~= "GET" or (self.path and self.path ~= path) or version ~= '1.1' then
     sock_send(fd, ERROR_RESPONSE(405))
     return nil, "2. 不支持的HTTP Protocol 版本."
   end
@@ -207,9 +207,7 @@ function websocket:start()
       skynet.fork(on_message, cls, data, typ)
     end
     if typ == "ping" then
-      skynet.fork(function (...)
-        return _send_frame(self.fd, true, 0xA, data or '', max_payload_len, send_masked)
-      end)
+      skynet.fork(_send_frame, self.fd, true, 0xA, data or '', max_payload_len, send_masked)
     end
   end
   return self:close()
