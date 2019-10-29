@@ -5,6 +5,8 @@ local crypt = require "skynet.crypt"
 local sha1 = crypt.sha1
 local base64encode = crypt.base64encode
 
+local socketdriver = require "skynet.socketdriver"
+
 local socket = require "skynet.socket"
 local sock_readline = socket.readline
 local sock_send = socket.write
@@ -119,6 +121,9 @@ local function do_handshak (self)
   if not ok then
     return nil, err
   end
+  if self.nodelay then
+    socketdriver.nodelay(fd)
+  end
   auth = true
   return ok
 end
@@ -128,6 +133,7 @@ local websocket = class("websocket-server")
 function websocket:ctor(opt)
   self.fd = opt.fd
   self.cls = opt.cls
+  self.nodelay = opt.nodelay
 end
 
 -- 超时时间
