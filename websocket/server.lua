@@ -66,16 +66,16 @@ end
 local function challenge (fd, headers)
   if not headers['Upgrade'] or lower(headers['Upgrade']) ~= 'websocket' then
     sock_send(fd, ERROR_RESPONSE(401))
-    return nil, "1. 不受支持的升级协议."
+    return nil, "1. Unsupported http upgrade version."
   end
   if headers['Sec-WebSocket-Version'] ~= '13' then
     sock_send(fd, ERROR_RESPONSE(403))
-    return nil, "2. 不受支持的协议版本."
+    return nil, "2. Unsupported http upgrade version."
   end
   local sec_key = headers['Sec-WebSocket-Key']
   if not sec_key or sec_key == '' then
     sock_send(fd, ERROR_RESPONSE(505))
-    return nil, "3. 无效的Sec-WebSocket-Key."
+    return nil, "3. invalid Sec-WebSocket-Key."
   end
   sock_send(fd, NORMAL_RESPONSE(headers, sec_key))
   return true
@@ -92,22 +92,22 @@ local function do_handshak (self)
   end)
   local protocol = sock_readline(fd, '\r\n')
   if not protocol then
-    return nil, "客户端断开了连接: data is nil."
+    return nil, "0. client close this session."
   end
   local method, path, version = match(protocol, '(%a+) (.+) HTTP/([%d%.]+)')
   if not method or not path or not version then
     sock_send(fd, ERROR_RESPONSE(400))
-    return nil, "1. 错误的HTTP Protocol Path 或者 methond."
+    return nil, "1. invalid http protocol request."
   end
   if method ~= "GET" or (self.path and self.path ~= path) or version ~= '1.1' then
     sock_send(fd, ERROR_RESPONSE(405))
-    return nil, "2. 不支持的HTTP Protocol 版本."
+    return nil, "2. Unsupported version of http protocol."
   end
   local headers = {}
   while 1 do
     local data = sock_readline(fd, '\r\n')
     if not data then
-      return nil, "2. 客户端断开了连接: data is nil."
+      return nil, "3. client close this session."
     end
     if data == '' then
       break
@@ -161,9 +161,7 @@ function websocket:start()
     return self:close()
   end
   local max_payload_len, send_masked
-  local cls = self.cls:new {
-    headers = msg,
-    ws = {
+  local ws = {
       send = function (ws, data, binary) -- 向客户端发送text/binary消息
         if ws.closed then
           return
@@ -180,15 +178,15 @@ function websocket:start()
         _send_frame(self.fd, true, 0x8, char(((1000 >> 8) & 0xff), (1000 & 0xff))..(type(data) ~= 'string' and '' or data), max_payload_len, send_masked)
         return self:close()
       end,
-    }
   }
+  local cls = self.cls:new { headers = msg, ws = ws }
   self.cls = nil
   send_masked = cls.send_masked
   max_payload_len = cls.max_payload_len or 65535
-  local on_open = assert(type(cls.on_open) == 'function' and cls.on_open, "请为WebSocket对象注册on_open方法")
-  local on_error = assert(type(cls.on_error) == 'function' and cls.on_error, "请为WebSocket对象注册on_error方法")
-  local on_close = assert(type(cls.on_close) == 'function' and cls.on_close, "请为WebSocket对象注册on_close方法")
-  local on_message = assert(type(cls.on_message) == 'function' and cls.on_message, "请为WebSocket对象注册on_message方法")
+  local on_open = assert(type(cls.on_open) == 'function' and cls.on_open, "WebSocket need `on_open` method.")
+  local on_error = assert(type(cls.on_error) == 'function' and cls.on_error, "WebSocket need `on_error` method.")
+  local on_close = assert(type(cls.on_close) == 'function' and cls.on_close, "WebSocket need `on_close` method.")
+  local on_message = assert(type(cls.on_message) == 'function' and cls.on_message, "WebSocket need `on_message` method.")
   local ok, msg = pcall(on_open, cls)
   if not ok then
     skynet.error(msg)
@@ -197,7 +195,7 @@ function websocket:start()
   while 1 do
     local data, typ, msg = _recv_frame(self.fd, max_payload_len, send_masked)
     if (not data and not typ) or typ == 'close' then
-      cls.ws.closed = true
+      ws.closed = true
       if err then
         local ok, err = pcall(on_error, cls, msg)
         if not ok then
