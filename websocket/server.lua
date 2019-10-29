@@ -125,7 +125,7 @@ local function do_handshak (self)
     socketdriver.nodelay(fd)
   end
   auth = true
-  return ok
+  return ok, headers
 end
 
 local websocket = class("websocket-server")
@@ -162,6 +162,7 @@ function websocket:start()
   end
   local max_payload_len, send_masked
   local cls = self.cls:new {
+    headers = msg,
     ws = {
       send = function (ws, data, binary) -- 向客户端发送text/binary消息
         if ws.closed then
