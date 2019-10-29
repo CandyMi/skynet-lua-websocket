@@ -8,21 +8,25 @@
 
   The following usage examples will show you how to use `skynet-websocket`:
 
-  ```lua
-  -- main.lua for skynet start script.
-  local skynet = require "skynet"
-  local socket = require "skynet.socket"
-  local wsserver = require "websocket.server"
-  local ws = require "ws"
+```lua
+-- main.lua for skynet start script.
+local skynet = require "skynet"
+local socket = require "skynet.socket"
+local wsserver = require "websocket.server"
+local ws = require "ws"
 
-  skynet.start(function()
-  	local server = socket.listen("0.0.0.0", 8000, 128)
-  	socket.start(server, function(id, ipaddr)
-  		local wss = wsserver:new { fd = id, cls = ws }
-  		return wss:start()
-  	end)
+skynet.start(function()
+  local server = socket.listen("0.0.0.0", 8000, 128)
+  socket.start(server, function(id, ipaddr)
+    local wss = wsserver:new {
+      fd = id,
+      cls = ws,
+      nodelay = true,
+    }
+    return wss:start()
   end)
-  ```
+end)
+```
 
   We launch a socket server(`listen 0.0.0.0:8000`) And All client connections will be received via the socket.start callback.
 
