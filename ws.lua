@@ -5,6 +5,7 @@ local ws = class("ws")
 
 function ws:ctor (opt)
 	self.ws = opt.ws             -- websocket对象
+  self.headers = opt.headers   -- http headers
 	self.send_masked = false     -- 掩码(默认为false, 不建议修改或者使用)
 	self.max_payload_len = 65535 -- 最大有效载荷长度(默认为65535, 不建议修改或者使用)
 end

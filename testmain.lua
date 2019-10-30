@@ -7,7 +7,7 @@ skynet.start(function()
 	local server = socket.listen("0.0.0.0", 8000, 128)
 	socket.start(server, function(id, ipaddr)
 		local wss = wsserver:new {
-			fd = id, cls = ws
+			fd = id, cls = ws, nodelay = true
 		}
 		return wss:start()
 	end)
