@@ -28,7 +28,7 @@ skynet.start(function()
 end)
 ```
 
-  We launch a socket server(`listen 0.0.0.0:8000`) And All client connections will be received via the socket.start callback.
+  We launch a socket server(`listen 0.0.0.0:8000`) And All client connections will be received via the `socket.start` callback.
 
   Create a `Websocket.server` object for each connection in the callback function and manage all events using the `Websocket.server` object.
 
@@ -74,7 +74,7 @@ end
 return ws
 ```
 
-  To simplify the use of Websocket.server, we have defined four callback methods(must) for everyday use.
+  To simplify the use of `Websocket.server`, we have defined four callback methods(must) for everyday use.
 
   * `on_open`, When the connection has been established.
 
